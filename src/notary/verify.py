@@ -1,7 +1,8 @@
-"""Local root-hash verification for forensic snapshots.
+"""Local root-hash verification for forensic snapshots.  Offline and deterministic. Contract only — implemented in WO-1."""
 
-Provides verification of Merkle chains and root hashes without contacting
-any external service. All verification is offline and deterministic.
-"""
+from __future__ import annotations
+from notary.snapshot import ForensicSnapshot
 
-# Placeholder: verification logic TBD
+def verify(snapshot: ForensicSnapshot, secret_key: bytes) -> bool:
+    """Recompute the snapshot's root hash and report whether it is authentic. (WO-1)"""
+    raise NotImplementedError

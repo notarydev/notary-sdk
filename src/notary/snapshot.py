@@ -1,25 +1,24 @@
-"""ForensicSnapshot model with schema versioning.
+"""ForensicSnapshot model with schema versioning."""
 
-Defines the core data structure for capturing and sealing forensic evidence.
-"""
+from dataclasses import dataclass, field
+from typing import Any
 
-from dataclasses import dataclass
-from typing import Any, Dict
-
+@dataclass
+class CapturedElement:
+    """A single captured node in a run: an LLM call, an API call, or a decision."""
+    kind: str  # "llm" | "http" | "decision"
+    payload: dict[str, Any] = field(default_factory=dict)
+    element_hash: str = ""
 
 @dataclass
 class ForensicSnapshot:
-    """A forensic snapshot of agent execution state.
-    
-    Attributes:
-        schema_version: Version of the snapshot schema (e.g., "1.0")
-        timestamp: ISO 8601 timestamp when snapshot was captured
-        data: Arbitrary captured data (LLM, HTTP, decisions, etc.)
-    """
-
-    schema_version: str
+    """A forensic snapshot of an agent run."""
+    schema_version: int
     timestamp: str
-    data: Dict[str, Any]
+    elements: list[CapturedElement] = field(default_factory=list)
+    merkle_chain: list[str] = field(default_factory=list)
+    root_hash: str = ""
 
-
-# Placeholder: snapshot serialization and verification TBD
+    def to_json(self) -> str:
+        """Serialize to the canonical JSON contract sent to ingestion. (WO-2)"""
+        raise NotImplementedError
