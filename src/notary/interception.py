@@ -1,7 +1,7 @@
 """Transparent capture of LLM calls, outbound HTTP calls, and decisions.
 
-Provides ``RunCapture`` (manual capture), ``instrument`` (decorator), and
-``capture_run`` (context manager) for building forensic snapshots offline.
+Provides RunCapture (manual capture), instrument (decorator), and capture_run
+(context manager) for building forensic snapshots offline.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ class RunCapture:
 
     @property
     def snapshot(self) -> ForensicSnapshot | None:
-        """Return the sealed snapshot, or ``None`` if not yet finalized."""
+        """Return the sealed snapshot, or None if not yet finalized."""
         return self._snapshot
 
     def capture_llm(
@@ -65,8 +65,9 @@ class RunCapture:
 
     def capture_decision(self, decision: Any = None) -> None:
         """Record a decision point element."""
-        payload: dict[str, Any] = {"decision": decision}
-        self._elements.append(CapturedElement(kind="decision", payload=payload))
+        self._elements.append(
+            CapturedElement(kind="decision", payload={"decision": decision})
+        )
 
     def capture_rng_seed(self, seed: Any = None) -> None:
         """Record the RNG seed for determinism."""
@@ -81,13 +82,11 @@ class RunCapture:
         )
 
     def finalize(self, timestamp: str = "") -> ForensicSnapshot:
-        """Seal all captured elements and return the snapshot.
-
-        Raises ``ValueError`` if no elements were captured.
-        """
+        """Seal all captured elements and return the snapshot."""
         if not self._elements:
             raise ValueError("no elements captured — cannot finalize")
-        hashes, chain, root = seal_captured_elements(self._elements, self._secret_key)
+
+        _, chain, root = seal_captured_elements(self._elements, self._secret_key)
         self._snapshot = ForensicSnapshot(
             schema_version=1,
             timestamp=timestamp,
@@ -99,14 +98,7 @@ class RunCapture:
 
 
 def instrument(secret_key: bytes) -> Callable[[F], F]:
-    """Decorator that wraps a callable, captures its run, and seals a snapshot.
-
-    The wrapped function is called normally.  Its return value is captured as
-    a decision element.  If it raises, an error decision is captured before
-    re-raising.
-
-    Access the latest snapshot via ``<wrapper>.notary_last_snapshot``.
-    """
+    """Decorator that wraps a callable, captures its run, and seals a snapshot."""
 
     def decorator(fn: F) -> F:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -115,12 +107,11 @@ def instrument(secret_key: bytes) -> Callable[[F], F]:
                 result = fn(*args, **kwargs)
             except BaseException:
                 cap.capture_decision({"error": True})
-                snap = cap.finalize()
-                wrapper.notary_last_snapshot = snap  # type: ignore[attr-defined]
+                wrapper.notary_last_snapshot = cap.finalize()  # type: ignore[attr-defined]
                 raise
+
             cap.capture_decision({"result": result})
-            snap = cap.finalize()
-            wrapper.notary_last_snapshot = snap  # type: ignore[attr-defined]
+            wrapper.notary_last_snapshot = cap.finalize()  # type: ignore[attr-defined]
             return result
 
         wrapper.notary_last_snapshot = None  # type: ignore[attr-defined]
@@ -131,15 +122,10 @@ def instrument(secret_key: bytes) -> Callable[[F], F]:
 
 @contextmanager
 def capture_run(secret_key: bytes) -> Generator[RunCapture, None, None]:
-    """Context manager that yields a ``RunCapture`` for manual element capture.
-
-    Usage::
-
-        with capture_run(key) as cap:
-            cap.capture_llm(prompt="hi", response="hello")
-            cap.capture_decision("approve")
-        snapshot = cap.snapshot
-    """
+    """Yield a RunCapture and finalize it when the context exits."""
     cap = RunCapture(secret_key)
-    yield cap
-    cap.finalize()
+    try:
+        yield cap
+    finally:
+        if cap.snapshot is None and cap._elements:
+            cap.finalize()

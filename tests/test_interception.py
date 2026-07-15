@@ -15,7 +15,7 @@ SECRET = b"test-secret-key-32-bytes-long!!!"
 class TestRunCapture:
     def test_missing_key_raises(self) -> None:
         with pytest.raises(ValueError, match="secret_key"):
-            RunCapture(b"")  # type: ignore[arg-type]
+            RunCapture(b"")
 
     def test_finalize_empty_raises(self) -> None:
         cap = RunCapture(SECRET)
