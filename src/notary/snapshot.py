@@ -11,7 +11,7 @@ from typing import Any
 class CapturedElement:
     """A single captured node in a run: an LLM call, an API call, or a decision."""
 
-    kind: str  # "llm" | "http" | "decision"
+    kind: str  # "llm" | "http" | "decision" | "rng_seed" | "timestamp"
     payload: dict[str, Any] = field(default_factory=dict)
     element_hash: str = ""
 
@@ -23,6 +23,15 @@ class CapturedElement:
             separators=(",", ":"),
             ensure_ascii=False,
         ).encode("utf-8")
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> CapturedElement:
+        """Reconstruct a ``CapturedElement`` from a plain dict."""
+        return cls(
+            kind=str(d.get("kind", "")),
+            payload=dict(d.get("payload", {})),
+            element_hash=str(d.get("element_hash", "")),
+        )
 
 
 @dataclass
@@ -57,3 +66,20 @@ class ForensicSnapshot:
             separators=(",", ":"),
             ensure_ascii=False,
         )
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> ForensicSnapshot:
+        """Reconstruct a ``ForensicSnapshot`` from a plain dict."""
+        elements_raw = d.get("elements", [])
+        return cls(
+            schema_version=int(d.get("schema_version", 0)),
+            timestamp=str(d.get("timestamp", "")),
+            elements=[CapturedElement.from_dict(e) for e in elements_raw],
+            merkle_chain=list(d.get("merkle_chain", [])),
+            root_hash=str(d.get("root_hash", "")),
+        )
+
+    @classmethod
+    def from_json(cls, raw: str) -> ForensicSnapshot:
+        """Parse a canonical JSON string into a ``ForensicSnapshot``."""
+        return cls.from_dict(json.loads(raw))

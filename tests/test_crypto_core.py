@@ -1,6 +1,8 @@
-"""Tests for the offline SDK cryptographic core (WO-1)."""
+"""Tests for the offline SDK cryptographic core (WO-1), hardened."""
 
 from __future__ import annotations
+
+import json
 
 import pytest
 
@@ -19,19 +21,19 @@ SECRET = b"test-secret-key-32-bytes-long!!!"
 class TestSealElement:
     def test_deterministic(self) -> None:
         a = seal_element(b"\x00" * 32, b"hello", SECRET)
-        b = seal_element(b"\x00" * 32, b"hello", SECRET)
-        assert a == b
+        b_val = seal_element(b"\x00" * 32, b"hello", SECRET)
+        assert a == b_val
 
     def test_changes_when_data_changes(self) -> None:
         a = seal_element(b"\x00" * 32, b"hello", SECRET)
-        b = seal_element(b"\x00" * 32, b"world", SECRET)
-        assert a != b
+        b_val = seal_element(b"\x00" * 32, b"world", SECRET)
+        assert a != b_val
 
     def test_changes_when_key_changes(self) -> None:
         other = b"different-key-32-bytes-long!!!"
         a = seal_element(b"\x00" * 32, b"hello", SECRET)
-        b = seal_element(b"\x00" * 32, b"hello", other)
-        assert a != b
+        b_val = seal_element(b"\x00" * 32, b"hello", other)
+        assert a != b_val
 
     def test_empty_key_raises(self) -> None:
         with pytest.raises(ValueError, match="secret_key"):
@@ -65,7 +67,7 @@ class TestSealCapturedElements:
         hashes, chain, root = seal_captured_elements(elems, SECRET)
         assert len(hashes) == 2
         assert len(chain) == 2
-        assert len(root) == 64  # hex-encoded SHA-256
+        assert len(root) == 64
         for elem, h in zip(elems, hashes):
             assert elem.element_hash == h
 
@@ -106,22 +108,75 @@ class TestComputeRootHash:
         assert compute_root_hash([h]) == h.hex()
 
     def test_two_hashes(self) -> None:
-        a, b = b"\x01" * 32, b"\x02" * 32
-        expected = __import__("hashlib").sha256(a + b).hexdigest()
-        assert compute_root_hash([a, b]) == expected
-
-    def test_odd_count_duplicates_last(self) -> None:
-        a, b, c = b"\x01" * 32, b"\x02" * 32, b"\x03" * 32
         import hashlib
 
-        ab = hashlib.sha256(a + b).digest()
+        a, b_val = b"\x01" * 32, b"\x02" * 32
+        expected = hashlib.sha256(a + b_val).hexdigest()
+        assert compute_root_hash([a, b_val]) == expected
+
+    def test_odd_count_duplicates_last(self) -> None:
+        import hashlib
+
+        a, b_val, c = b"\x01" * 32, b"\x02" * 32, b"\x03" * 32
+        ab = hashlib.sha256(a + b_val).digest()
         cc = hashlib.sha256(c + c).digest()
         root = hashlib.sha256(ab + cc).hexdigest()
-        assert compute_root_hash([a, b, c]) == root
+        assert compute_root_hash([a, b_val, c]) == root
 
     def test_empty_raises(self) -> None:
         with pytest.raises(ValueError, match="empty"):
             compute_root_hash([])
+
+    def test_non_bytes_raises(self) -> None:
+        with pytest.raises(ValueError, match="32-byte"):
+            compute_root_hash(["not-bytes"])  # type: ignore[list-item]
+
+    def test_wrong_length_raises(self) -> None:
+        with pytest.raises(ValueError, match="32-byte"):
+            compute_root_hash([b"\x00" * 16])
+
+
+# ---------------------------------------------------------------------------
+# snapshot serialization
+# ---------------------------------------------------------------------------
+
+
+class TestSnapshotSerialization:
+    def test_canonical_bytes_excludes_element_hash(self) -> None:
+        e = CapturedElement(kind="llm", payload={"a": 1}, element_hash="deadbeef")
+        cb = e.canonical_bytes()
+        assert b"deadbeef" not in cb
+        parsed = json.loads(cb)
+        assert parsed["kind"] == "llm"
+        assert parsed["payload"] == {"a": 1}
+
+    def test_canonical_bytes_deterministic(self) -> None:
+        e = CapturedElement(kind="http", payload={"z": 2, "a": 1})
+        assert e.canonical_bytes() == e.canonical_bytes()
+
+    def test_to_json_round_trip(self) -> None:
+        snap = _sealed_snapshot()
+        raw = snap.to_json()
+        restored = ForensicSnapshot.from_json(raw)
+        assert restored.schema_version == snap.schema_version
+        assert restored.timestamp == snap.timestamp
+        assert len(restored.elements) == len(snap.elements)
+        assert restored.root_hash == snap.root_hash
+        assert restored.merkle_chain == snap.merkle_chain
+
+    def test_from_dict_preserves_fields(self) -> None:
+        snap = _sealed_snapshot()
+        d = snap.to_dict()
+        restored = ForensicSnapshot.from_dict(d)
+        assert restored.schema_version == snap.schema_version
+        assert restored.elements[0].kind == snap.elements[0].kind
+
+    def test_canonical_json_deterministic_for_dict_key_order(self) -> None:
+        d1 = {"b": 2, "a": 1}
+        d2 = {"a": 1, "b": 2}
+        e1 = CapturedElement(kind="x", payload=d1)
+        e2 = CapturedElement(kind="x", payload=d2)
+        assert e1.canonical_bytes() == e2.canonical_bytes()
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +227,31 @@ class TestVerify:
         snap = ForensicSnapshot(
             schema_version=1, timestamp="t", elements=[], root_hash=""
         )
+        assert verify(snap, SECRET) is False
+
+    def test_false_malformed_element_hash_hex(self) -> None:
+        snap = _sealed_snapshot()
+        snap.elements[0].element_hash = "not-hex!!!"
+        assert verify(snap, SECRET) is False
+
+    def test_false_empty_element_hash(self) -> None:
+        snap = _sealed_snapshot()
+        snap.elements[0].element_hash = ""
+        assert verify(snap, SECRET) is False
+
+    def test_false_wrong_length_element_hash(self) -> None:
+        snap = _sealed_snapshot()
+        snap.elements[0].element_hash = "ab" * 16  # 32 hex chars = 16 bytes, not 32
+        assert verify(snap, SECRET) is False
+
+    def test_false_empty_root_hash(self) -> None:
+        snap = _sealed_snapshot()
+        snap.root_hash = ""
+        assert verify(snap, SECRET) is False
+
+    def test_false_malformed_root_hash(self) -> None:
+        snap = _sealed_snapshot()
+        snap.root_hash = "not-a-hash"
         assert verify(snap, SECRET) is False
 
     def test_no_network_dependency(self) -> None:

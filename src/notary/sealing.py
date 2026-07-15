@@ -8,6 +8,8 @@ from typing import Tuple
 
 from notary.snapshot import CapturedElement
 
+_HASH_LEN = 32
+
 
 def seal_element(prev_hash: bytes, data: bytes, secret_key: bytes) -> bytes:
     """Return the HMAC-SHA256 seal chaining *data* onto *prev_hash*.
@@ -29,12 +31,19 @@ def compute_root_hash(element_hashes: list[bytes]) -> str:
     Uses SHA-256 pairwise folding.  If the count is odd the last hash is
     duplicated for that round.  Returns the root as a hex string.
 
-    Raises ``ValueError`` for an empty list.
+    Every element in *element_hashes* must be a ``bytes`` object of exactly
+    32 bytes (SHA-256 output length).  Raises ``ValueError`` for an empty
+    list or for non-bytes / wrong-length entries.
     """
     if not element_hashes:
         raise ValueError("element_hashes must not be empty")
 
-    current: list[bytes] = list(element_hashes)
+    current: list[bytes] = []
+    for h in element_hashes:
+        if not isinstance(h, bytes) or len(h) != _HASH_LEN:
+            raise ValueError("every element hash must be 32-byte bytes")
+        current.append(h)
+
     while len(current) > 1:
         next_round: list[bytes] = []
         for i in range(0, len(current), 2):
@@ -51,7 +60,12 @@ def seal_captured_elements(
 ) -> Tuple[list[str], list[str], str]:
     """Seal every element in order, populate hashes, and compute the root.
 
+    The ``merkle_chain`` returned for this MVP is the ordered list of
+    per-element leaf hashes (hex-encoded).  A full binary Merkle tree with
+    intermediate nodes can replace this later.
+
     Returns ``(element_hashes_hex, merkle_chain, root_hash_hex)``.
+    Sets ``element.element_hash`` on each element in-place.
 
     Raises ``ValueError`` when *elements* is empty or *secret_key* is missing.
     """
@@ -60,7 +74,7 @@ def seal_captured_elements(
     if not elements:
         raise ValueError("elements must not be empty")
 
-    prev_hash = b"\x00" * 32
+    prev_hash = b"\x00" * _HASH_LEN
     element_hashes_hex: list[str] = []
 
     for elem in elements:
@@ -71,4 +85,4 @@ def seal_captured_elements(
         prev_hash = h
 
     root_hash = compute_root_hash([bytes.fromhex(h) for h in element_hashes_hex])
-    return element_hashes_hex, element_hashes_hex, root_hash
+    return element_hashes_hex, list(element_hashes_hex), root_hash
