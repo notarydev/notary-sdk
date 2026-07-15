@@ -1,5 +1,6 @@
 import notary
 
+
 def test_package_imports() -> None:
     assert notary.__version__ == "0.0.1"
 

@@ -1,6 +1,10 @@
-"""Transparent capture of LLM calls, outbound HTTP calls, and the agent's decision.  Contract only. Implemented in WO-2."""
+"""Transparent capture of LLM calls, outbound HTTP calls, and decisions.
+
+Contract only. Implemented in WO-2.
+"""
 
 from __future__ import annotations
+
 from collections.abc import Callable
 from typing import Any, TypeVar
 
