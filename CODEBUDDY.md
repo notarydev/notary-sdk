@@ -10,11 +10,11 @@ Python client library for explicitly capturing AI decision evidence as forensic 
 
 | Area | Files |
 |---|---|
-| Explicit capture helpers | `src/notary/interception.py` |
+| Explicit capture APIs | `src/notary/interception.py` |
 | Cryptographic sealing | `src/notary/sealing.py` |
 | Snapshot model | `src/notary/snapshot.py` |
 | Verification | `src/notary/verify.py` |
-| Tests | `tests/test_crypto_core.py`, `tests/test_interception.py` |
+| Tests | `tests/test_crypto_core.py`, `tests/test_interception.py`, `tests/test_claim_boundaries.py` |
 | CI | `.github/workflows/ci.yml` |
 
 ## Usage
@@ -51,12 +51,13 @@ Unsupported until implemented and tested:
 
 ```bash
 pip install -e ".[dev]"
-pytest -q    # 54 tests
+pytest -q    # 57 tests
 ```
 
 ## State
 
 - Python-only SDK. No JS/Go/Java equivalents.
-- Explicitly captures: LLM payloads, HTTP payloads, decisions, timestamps, RNG seeds
+- Explicitly captures selected LLM payloads, HTTP payloads, decisions, timestamps, RNG seeds
 - Seals evidence with HMAC-SHA256 + Merkle tree
-- 54 tests passing
+- TypeScript package is a placeholder and does not claim parity
+- 57 tests passing

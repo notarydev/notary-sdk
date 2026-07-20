@@ -1,18 +1,41 @@
 {
   "work_order": "PRG-004",
+  "repo": "notarydev/notary-sdk",
+  "branch": "codex/prg-004-sdk-claim-hardening",
   "status": "in_review",
+  "usage_visibility": "not_available",
   "scope": "Narrow SDK capture claims to implemented explicit capture surfaces.",
+  "checks": [
+    {
+      "command": "python3 -X pycache_prefix=/tmp/notary-sdk-pycache -m compileall -q src tests",
+      "result": "passed"
+    },
+    {
+      "command": "PYTHONPATH=src python3 -c '... manual capture smoke ...'",
+      "result": "passed",
+      "notes": "Verified RunCapture, capture_http, capture_decision, finalize, and local verify"
+    },
+    {
+      "command": "PYTHONPATH=src python3 -m pytest tests",
+      "result": "passed",
+      "notes": "57 tests passed after merging remote branch test coverage"
+    }
+  ],
+  "blockers": [],
   "supported_claims": [
     "Manual capture with RunCapture",
     "Function-level capture with @instrument",
     "Scoped manual capture with capture_run",
+    "Manual recording of selected LLM, HTTP/tool, decision, timestamp, and RNG seed events",
     "HMAC-SHA256 element sealing and Merkle root generation",
     "Local snapshot verification"
   ],
   "unsupported_claims": [
-    "Transparent interception of OpenAI, Anthropic, HTTP, browser, or cloud SDK calls",
+    "Transparent interception of OpenAI, Anthropic, HTTP, browser, cloud SDK, or framework calls",
     "Automatic capture of every API call or LLM invocation",
     "Verified PyPI or npm package availability",
+    "TypeScript SDK parity beyond the current placeholder",
     "Cloud ingest, GRC integrations, or compliance certification from this SDK alone"
-  ]
+  ],
+  "next_recommended_action": "Continue PRG-008 website claim alignment after PRG-004 CI is green."
 }
