@@ -1,0 +1,47 @@
+{
+  "work_order": "PRG-004",
+  "repo": "notarydev/notary-sdk",
+  "branch": "codex/prg-004-sdk-claim-hardening",
+  "status": "complete",
+  "usage_visibility": "not_available",
+  "checks": [
+    {
+      "command": "PYTHONPATH=src pytest tests/test_crypto_core.py tests/test_interception.py tests/test_claim_boundaries.py",
+      "result": "not_run",
+      "notes": "pytest executable is not installed in this runtime"
+    },
+    {
+      "command": "PYTHONPATH=src python -m pytest tests/test_crypto_core.py tests/test_interception.py tests/test_claim_boundaries.py",
+      "result": "not_run",
+      "notes": "pytest module is not installed in this runtime"
+    },
+    {
+      "command": "PYTHONPATH=src python -m compileall -q src tests",
+      "result": "passed"
+    },
+    {
+      "command": "PYTHONPATH=src python - <<'PY' ... test_claim_boundaries direct calls ... PY",
+      "result": "passed",
+      "notes": "Directly executed the claim-boundary regression assertions without the pytest runner"
+    },
+    {
+      "command": "PYTHONPATH=src python - <<'PY' ... manual/context/decorator capture smoke ... PY",
+      "result": "passed",
+      "notes": "Verified RunCapture, capture_run, @instrument, HMAC/Merkle sealing, and local verify"
+    }
+  ],
+  "blockers": [],
+  "claims_supported": [
+    "Manual RunCapture capture of selected LLM, HTTP/tool, decision, timestamp, and RNG seed events",
+    "capture_run context-manager capture",
+    "@instrument decorator capture of callable result or error decision",
+    "HMAC-SHA256 element sealing and Merkle root generation",
+    "Local snapshot verification"
+  ],
+  "claims_unsupported": [
+    "Transparent capture of all OpenAI/Anthropic/framework/outbound HTTP calls",
+    "PyPI package installation unless publishing is verified",
+    "TypeScript SDK parity beyond the current placeholder"
+  ],
+  "next_recommended_action": "Run the SDK tests in a dependency-complete environment, then continue PRG-008 website claim alignment."
+}

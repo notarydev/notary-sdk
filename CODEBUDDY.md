@@ -10,7 +10,7 @@ Python client library for capturing AI decisions as forensic snapshots. Provides
 
 | Area | Files |
 |---|---|
-| Capture/interception | `src/notary/interception.py` |
+| Explicit capture APIs | `src/notary/interception.py` |
 | Cryptographic sealing | `src/notary/sealing.py` |
 | Snapshot model | `src/notary/snapshot.py` |
 | Verification | `src/notary/verify.py` |
@@ -29,8 +29,7 @@ capture.capture_decision(decision="APPROVE")
 snapshot = capture.finalize()
 
 # Send to Notary Platform
-requests.post("https://api.getnotary.ai/v1/incidents/ingest",
-    json={"snapshot": snapshot.to_dict()})
+# Optional: submit snapshot to the platform from application code.
 ```
 
 ## Build/Run
@@ -43,6 +42,11 @@ pytest -q    # 54 tests
 ## State
 
 - Python-only SDK. No JS/Go/Java equivalents.
-- Captures: LLM calls, HTTP calls, decisions, timestamps, RNG seeds
+- Explicitly captures selected LLM calls, HTTP calls, decisions, timestamps, RNG seeds
 - Seals evidence with HMAC-SHA256 + Merkle tree
 - 54 tests passing
+
+## Claim boundary
+
+- Supported: manual/context/decorator capture, HMAC/Merkle sealing, local verification.
+- Not yet supported as a tested claim: transparent capture of all OpenAI, Anthropic, framework, or outbound HTTP calls.

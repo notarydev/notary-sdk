@@ -1,7 +1,8 @@
-"""Transparent capture of LLM calls, outbound HTTP calls, and decisions.
+"""Explicit capture of selected LLM calls, HTTP/tool calls, and decisions.
 
 Provides RunCapture (manual capture), instrument (decorator), and capture_run
-(context manager) for building forensic snapshots offline.
+(context manager) for building forensic snapshots offline. This module does not
+monkeypatch providers or automatically capture every runtime call.
 """
 
 from __future__ import annotations

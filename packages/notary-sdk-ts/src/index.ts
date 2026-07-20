@@ -1,6 +1,8 @@
 /**
  * Notary Forensic Logger SDK — TypeScript implementation
- * Offline-first sealing and interception for AI agents.
+ * Placeholder package. Python SDK currently supports explicit capture,
+ * HMAC/Merkle sealing, and local verification; TypeScript parity is not yet
+ * implemented here.
  */
 
 export class ForensicSnapshot {
@@ -14,4 +16,4 @@ export class ForensicSnapshot {
   ) {}
 }
 
-// Placeholder: sealing, interception, and verification logic TBD
+// Placeholder: TypeScript sealing, capture, and verification logic TBD.

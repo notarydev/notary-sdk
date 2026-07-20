@@ -1,4 +1,4 @@
-"""Notary Forensic Logger SDK — offline-first sealing and interception for AI agents."""
+"""Notary Forensic Logger SDK — explicit capture, local sealing, and verification."""
 
 from notary.interception import RunCapture, capture_run, instrument
 from notary.snapshot import ForensicSnapshot

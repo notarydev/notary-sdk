@@ -9,7 +9,7 @@ from typing import Any
 
 @dataclass
 class CapturedElement:
-    """A single captured node in a run: an LLM call, an API call, or a decision."""
+    """A single explicitly captured node in a run."""
 
     kind: str  # "llm" | "http" | "decision" | "rng_seed" | "timestamp"
     payload: dict[str, Any] = field(default_factory=dict)

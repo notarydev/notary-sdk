@@ -8,7 +8,7 @@ packages = ["src/notary"]
 [project]
 name = "notary-sdk"
 version = "0.0.1"
-description = "Notary Forensic Logger SDK — offline-first sealing and interception for AI agents"
+description = "Notary Forensic Logger SDK — explicit capture, local HMAC/Merkle sealing, and verification"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Apache-2.0"}
