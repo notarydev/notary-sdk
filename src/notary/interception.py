@@ -1,4 +1,4 @@
-"""Transparent capture of LLM calls, outbound HTTP calls, and decisions.
+"""Explicit capture helpers for LLM payloads, HTTP payloads, and decisions.
 
 Provides RunCapture (manual capture), instrument (decorator), and capture_run
 (context manager) for building forensic snapshots offline.

@@ -1,0 +1,18 @@
+{
+  "work_order": "PRG-004",
+  "status": "in_review",
+  "scope": "Narrow SDK capture claims to implemented explicit capture surfaces.",
+  "supported_claims": [
+    "Manual capture with RunCapture",
+    "Function-level capture with @instrument",
+    "Scoped manual capture with capture_run",
+    "HMAC-SHA256 element sealing and Merkle root generation",
+    "Local snapshot verification"
+  ],
+  "unsupported_claims": [
+    "Transparent interception of OpenAI, Anthropic, HTTP, browser, or cloud SDK calls",
+    "Automatic capture of every API call or LLM invocation",
+    "Verified PyPI or npm package availability",
+    "Cloud ingest, GRC integrations, or compliance certification from this SDK alone"
+  ]
+}
