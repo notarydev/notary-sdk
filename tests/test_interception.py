@@ -73,6 +73,45 @@ class TestRunCapture:
         restored = ForensicSnapshot.from_json(raw)
         assert verify(restored, SECRET) is True
 
+    def test_snapshot_submit_posts_raw_snapshot_with_metadata(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        with capture_run(SECRET) as cap:
+            cap.capture_decision("ESCALATE")
+        snap = cap.snapshot
+        assert snap is not None
+
+        class Response:
+            def __enter__(self) -> "Response":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b'{"id":"vr-submit-test"}'
+
+        captured: dict[str, object] = {}
+
+        def fake_urlopen(req: object, timeout: float) -> Response:
+            captured["request"] = req
+            captured["timeout"] = timeout
+            return Response()
+
+        monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+        result = snap.submit(
+            "https://api.example.test",
+            api_token="token",
+            metadata={"source_record_ref": "CASE-1", "expected_outcome": "ESCALATE"},
+        )
+        assert result["id"] == "vr-submit-test"
+        req = captured["request"]
+        assert req.full_url.endswith("/v1/verification-records/from-snapshot")
+        assert req.get_header("Authorization") == "Bearer token"
+        body = json.loads(req.data.decode("utf-8"))
+        assert body["source_record_ref"] == "CASE-1"
+        assert body["elements"][0]["payload"]["decision"] == "ESCALATE"
+
 
 class TestInstrumentDecorator:
     def test_captures_return_value(self) -> None:
