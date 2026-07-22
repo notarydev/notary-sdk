@@ -10,6 +10,7 @@ This package does not currently provide tested transparent interception of all O
 - **Cryptographic sealing**: Captured snapshot elements are HMAC-sealed and Merkle-rooted for tamper evidence.
 - **Explicit capture APIs**: Record selected LLM prompts/completions, HTTP requests/responses, decision points, timestamps, and RNG seeds through `RunCapture`, `capture_run`, or `@instrument`.
 - **Local verification**: Verify chains and root hashes without contacting any service.
+- **Opt-in platform submission**: Submit a finalized snapshot to the Notary Platform verification-record endpoint when a deployment provides an API URL and token.
 - **Scoped claim boundary**: The SDK proves the integrity of what your code explicitly captures; it does not certify that every runtime side effect was captured.
 - **Schema versioning**: Create schema-v1 forensic snapshots that can be checked locally.
 
@@ -50,12 +51,13 @@ Supported today:
 - Function result/error capture with `@instrument`.
 - Scoped manual capture with `capture_run`.
 - Local HMAC-SHA256 sealing, Merkle root generation, and verification.
+- TypeScript capture, sealing, serialization, local verification, and opt-in platform submission parity.
 
 Not supported today:
 
 - Automatic transparent interception of OpenAI, Anthropic, requests, httpx, browser, or cloud SDK calls.
 - A guarantee that every API call or LLM invocation is captured without explicit instrumentation.
-- Cloud ingest or compliance workflow integrations from this SDK alone.
+- GRC integrations or compliance certification from this SDK alone.
 - PyPI or npm package availability until a release is explicitly published and verified.
 
 ## Repository Structure
