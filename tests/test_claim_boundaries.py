@@ -28,8 +28,9 @@ def test_python_package_descriptions_do_not_claim_transparent_interception() -> 
         assert "transparently intercept" not in text
 
 
-def test_typescript_package_is_marked_placeholder() -> None:
+def test_typescript_package_exposes_capture_and_verification_parity() -> None:
     text = _read("packages/notary-sdk-ts/src/index.ts")
-    assert "Placeholder package" in text
-    assert "TypeScript parity is not yet" in text
-    assert "implemented here" in text
+    assert "class RunCapture" in text
+    assert "function verify" in text
+    assert "function captureRun" in text
+    assert "HMAC" in text or "createHmac" in text

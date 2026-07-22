@@ -1,4 +1,4 @@
-{
+module.exports = {
   "preset": "ts-jest",
   "testEnvironment": "node",
   "testMatch": ["**/*.test.ts"],
@@ -6,4 +6,4 @@
     "src/**/*.ts",
     "!src/**/*.d.ts"
   ]
-}
+};

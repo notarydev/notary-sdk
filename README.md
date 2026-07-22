@@ -65,7 +65,7 @@ Not supported today:
   - `interception.py` — explicit manual/context/decorator capture APIs
   - `snapshot.py` — ForensicSnapshot model with schema versioning
   - `verify.py` — Local root-hash verification
-- `packages/notary-sdk-ts/` — Placeholder TypeScript package
+- `packages/notary-sdk-ts/` — TypeScript capture, sealing, serialization, and verification package
 - `tests/` — Test suite
 - `.github/workflows/` — CI/CD pipelines
 

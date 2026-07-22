@@ -59,5 +59,5 @@ pytest -q    # 57 tests
 - Python-only SDK. No JS/Go/Java equivalents.
 - Explicitly captures selected LLM payloads, HTTP payloads, decisions, timestamps, RNG seeds
 - Seals evidence with HMAC-SHA256 + Merkle tree
-- TypeScript package is a placeholder and does not claim parity
+- TypeScript package supports explicit capture, HMAC/Merkle sealing, serialization, local verification, and result instrumentation.
 - 57 tests passing
