@@ -28,14 +28,15 @@
     "Scoped manual capture with capture_run",
     "Manual recording of selected LLM, HTTP/tool, decision, timestamp, and RNG seed events",
     "HMAC-SHA256 element sealing and Merkle root generation",
-    "Local snapshot verification"
+    "Local snapshot verification",
+    "Opt-in submission of finalized snapshots to the Platform verification-record endpoint",
+    "TypeScript capture, sealing, serialization, verification, and submission parity"
   ],
   "unsupported_claims": [
     "Transparent interception of OpenAI, Anthropic, HTTP, browser, cloud SDK, or framework calls",
     "Automatic capture of every API call or LLM invocation",
     "Verified PyPI or npm package availability",
-    "TypeScript SDK parity beyond the current placeholder",
-    "Cloud ingest, GRC integrations, or compliance certification from this SDK alone"
+    "GRC integrations or compliance certification from this SDK alone"
   ],
   "next_recommended_action": "Continue PRG-008 website claim alignment after PRG-004 CI is green."
 }

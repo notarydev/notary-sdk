@@ -24,3 +24,12 @@ jobs:
         run: mypy src
       - name: Pytest
         run: pytest -q
+      - name: TypeScript SDK install
+        working-directory: packages/notary-sdk-ts
+        run: npm install --ignore-scripts
+      - name: TypeScript SDK build
+        working-directory: packages/notary-sdk-ts
+        run: npm run build
+      - name: TypeScript SDK tests
+        working-directory: packages/notary-sdk-ts
+        run: npm test -- --coverage=false

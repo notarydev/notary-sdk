@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
+from urllib import request as urllib_request
 
 
 @dataclass
@@ -66,6 +67,41 @@ class ForensicSnapshot:
             separators=(",", ":"),
             ensure_ascii=False,
         )
+
+    def submit(
+        self,
+        api_url: str,
+        api_token: str = "",
+        metadata: dict[str, Any] | None = None,
+        timeout: float = 10.0,
+    ) -> dict[str, Any]:
+        """Submit this snapshot to the Platform Verification Record endpoint.
+
+        Network access is opt-in: normal capture and local verification remain
+        fully offline. ``metadata`` carries source, agent, and expected-outcome
+        fields used by the platform to assess replayability.
+        """
+        base_url = api_url.rstrip("/")
+        if not base_url:
+            raise ValueError("api_url must be non-empty")
+        payload = self.to_dict()
+        if metadata:
+            payload.update(metadata)
+        headers = {"Content-Type": "application/json"}
+        if api_token:
+            headers["Authorization"] = f"Bearer {api_token}"
+        req = urllib_request.Request(
+            f"{base_url}/v1/verification-records/from-snapshot",
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        with urllib_request.urlopen(req, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+        result = json.loads(raw)
+        if not isinstance(result, dict):
+            raise ValueError("platform response must be a JSON object")
+        return result
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> ForensicSnapshot:
