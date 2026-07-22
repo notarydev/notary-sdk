@@ -69,11 +69,12 @@ export class CapturedElement implements CapturedElementData {
   }
 
   toJSON(): CapturedElementData {
-    return { kind: this.kind, payload: this.payload, elementHash: this.elementHash };
+    return { kind: this.kind, payload: this.payload, element_hash: this.elementHash } as CapturedElementData;
   }
 
   static fromJSON(value: CapturedElementData): CapturedElement {
-    return new CapturedElement(value.kind, { ...value.payload }, value.elementHash || "");
+    const raw = value as CapturedElementData & { element_hash?: string };
+    return new CapturedElement(value.kind, { ...value.payload }, raw.element_hash || value.elementHash || "");
   }
 }
 
@@ -95,11 +96,11 @@ export class ForensicSnapshot {
 
   toJSON(): Record<string, unknown> {
     return {
-      schemaVersion: this.schemaVersion,
+      schema_version: this.schemaVersion,
       timestamp: this.timestamp,
       elements: this.elements.map(element => element.toJSON()),
-      merkleChain: this.merkleChain,
-      rootHash: this.rootHash,
+      merkle_chain: this.merkleChain,
+      root_hash: this.rootHash,
     };
   }
 
@@ -109,14 +110,42 @@ export class ForensicSnapshot {
 
   static fromJSON(value: Record<string, unknown>): ForensicSnapshot {
     return new ForensicSnapshot(
-      (value.schemaVersion as string | number) ?? 0,
+      (value.schema_version as string | number) ?? (value.schemaVersion as string | number) ?? 0,
       String(value.timestamp || ""),
-      value
+      {
+        ...value,
+        elements: value.elements,
+        merkleChain: value.merkle_chain ?? value.merkleChain,
+        rootHash: value.root_hash ?? value.rootHash,
+      }
     );
   }
 
   static fromJson(raw: string): ForensicSnapshot {
     return ForensicSnapshot.fromJSON(JSON.parse(raw) as Record<string, unknown>);
+  }
+
+  async submit(
+    apiUrl: string,
+    apiToken = "",
+    metadata: Record<string, unknown> = {}
+  ): Promise<Record<string, unknown>> {
+    const baseUrl = apiUrl.replace(/\/$/, "");
+    if (!baseUrl) throw new Error("apiUrl must be non-empty");
+    const response = await globalThis.fetch(`${baseUrl}/v1/verification-records/from-snapshot`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiToken ? {Authorization: `Bearer ${apiToken}`} : {}),
+      },
+      body: JSON.stringify({...this.toJSON(), ...metadata}),
+    });
+    if (!response.ok) throw new Error(`Platform submission failed: ${response.status}`);
+    const result: unknown = await response.json();
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+      throw new Error("platform response must be a JSON object");
+    }
+    return result as Record<string, unknown>;
   }
 }
 
